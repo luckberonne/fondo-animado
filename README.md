@@ -87,7 +87,7 @@ Formato propio: una carpeta con imágenes y un `project.json` con `"type": "scen
 - Shaders (`contents/shaders/*.frag`, compilar con `qsb --qt6 -o x.frag.qsb x.frag`): `agua` (ondas que crecen con la
   distancia al horizonte `horizon` + destellos), `brillo` (franja de luz que barre la capa), `viento` (balanceo),
   `explosion` (mueve solo lo que una máscara `mask` marca como libre y hace titilar los brillos), `ojos` (neón sobre las zonas
-  de una máscara: resplandor aditivo fijo con parpadeos ocasionales en los que además se oscurece el ojo).
+  de una máscara: resplandor aditivo fijo con atenuaciones ocasionales, suaves y lentas (~3 cambios/s), en las que además se oscurece el ojo).
   Uniformes comunes: `strength`, `speed`, `horizon`.
 - Partículas: `nieve`, `polvo`, `luciernagas`.
 - Todo avanza con un reloj limitado (cuadros/s, «Imágenes y escenas» en la configuración; 20 por defecto) y se pausa
@@ -105,7 +105,7 @@ contents/code/escena_desde_imagen.py ilustracion.jpg --titulo "Gengar explosione
 # cuando las esquirlas son tan oscuras como el personaje y están pegadas a él, acotar el cuerpo con un polígono:
 #   --poligono "410,0 500,240 520,600 600,840 700,1000 1000,1080 1300,1000 1380,840 1400,600 1440,300 1500,0"
 # ojos (u otras luces) que laten con resplandor: una semilla por ojo; el color se toma de la imagen
-#   --brillo 739,490 --brillo 1181,480        (neón: encendido fijo y, cada tanto, un parpadeo que se apaga y vuelve;
+#   --brillo 739,490 --brillo 1181,480        (neón: encendido fijo y, cada tanto, una atenuación suave que oscila y vuelve;
 #                                             intensidad editable en la configuración: «Brillo de los ojos»)
 ```
 Detecta los personajes por luminancia, rellena lo que encierran (boca, ojos) solo si es cálido (los fluidos

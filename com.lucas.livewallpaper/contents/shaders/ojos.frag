@@ -18,27 +18,27 @@ layout(binding = 2) uniform sampler2D mask;
 // Hash solo aritmético (Hoskins): fract(sin(x) * 43758) no es portable entre CPU y GPU.
 float hash(float p) { p = fract(p * 0.1031); p *= p + 33.33; p *= p + p; return fract(p); }
 
-// Neón: encendido fijo con un zumbido casi imperceptible y, cada tanto, un parpadeo de caídas rápidas que termina
-// con una recuperación gradual. El intervalo y la duración varían de un ciclo a otro. `time` está en segundos
-// reales (el proyecto fija speed = 1 / velocidad).
+// Neón: encendido fijo con un zumbido casi imperceptible y, cada tanto, una atenuación lenta con oscilaciones suaves
+// (unos 3 cambios por segundo, sin saltos bruscos) que termina con una recuperación gradual. El momento y la duración
+// varían de un ciclo a otro. `time` está en segundos reales (el proyecto fija speed = 1 / velocidad).
 float neon(float t) {
-    const float CICLO = 6.0;
+    const float CICLO = 8.0;
     float k = floor(t / CICLO);
     float ph = t - k * CICLO;                              // segundo dentro del ciclo
-    float inicio = 3.2 + 1.8 * hash(k + 3.0);             // cuándo empieza el parpadeo
-    float dur = 0.8 + 0.7 * hash(k + 11.0);               // cuánto dura
-    float level = 0.96 + 0.04 * sin(t * 47.0);             // zumbido
+    float inicio = 4.0 + 2.5 * hash(k + 3.0);             // cuándo empieza
+    float dur = 1.8 + 1.0 * hash(k + 11.0);               // cuánto dura la parte oscilante
+    float level = 0.97 + 0.03 * sin(t * 47.0);             // zumbido
     float u = ph - inicio;
-    if (u > 0.0 && u < dur) {
-        float paso = floor(u * 12.0);                      // 12 cambios por segundo
-        float on = step(0.42, hash(paso + k * 31.0));      // encendido/apagado al azar
-        float caida = mix(0.10, 0.70, hash(paso + k * 17.0));
-        float f = mix(caida, 1.0, on);
-        float subida = smoothstep(dur * 0.55, dur, u);     // hacia el final vuelve a subir de a poco
-        return level * mix(f, 1.0, subida);
-    }
-    if (u >= dur && u < dur + 0.5) {                       // pequeña bajada tras el parpadeo
-        return level * mix(0.55, 1.0, smoothstep(dur, dur + 0.5, u));
+    if (u > 0.0 && u < dur + 1.0) {
+        float bajada = smoothstep(0.0, 0.45, u);           // se atenúa en ~0,45 s, no de golpe
+        float p = u * 3.0;
+        float n = floor(p);
+        float a = mix(0.12, 0.85, hash(n + k * 31.0));
+        float b = mix(0.12, 0.85, hash(n + 1.0 + k * 31.0));
+        float ondas = mix(a, b, smoothstep(0.0, 1.0, fract(p)));   // interpola: sin saltos
+        float dip = mix(1.0, ondas, bajada);
+        float subida = smoothstep(dur * 0.6, dur + 1.0, u); // vuelve a encenderse de a poco
+        return level * mix(dip, 1.0, subida);
     }
     return level;
 }
