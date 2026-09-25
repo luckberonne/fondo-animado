@@ -46,7 +46,8 @@ WallpaperItem {
     function forLockScreen(p) {
         if (!p || p.type === "image")
             return p;
-        const still = p.poster || p.preview;
+        const firstImage = p.scene && p.scene.layers ? (p.scene.layers.find(l => l.image) || {}).image : "";
+        const still = p.poster || p.preview || firstImage;
         if (!still || !p.dir)
             return null;
         return Object.assign({}, p, { type: "image", file: still, poster: "", preview: "", audio: false, properties: {} });
@@ -224,12 +225,13 @@ WallpaperItem {
                     // al tamaño correcto); después se reemplazan por bindings en onLoaded.
                     const isImage = project.type === "image";
                     const isWeb = project.type === "web";
+                    const isScene = project.type === "scene";
                     const init = { project: project, fillMode: root.cfg.FillMode };
                     if (isImage)
                         init.props = Util.effectiveProps(project, root.cfg.PropertyOverrides);
-                    else if (isWeb)
+                    else if (isWeb || isScene)
                         init.props = Util.webOverrides(project, root.cfg.PropertyOverrides);
-                    setSource(isImage ? "ImageLayer.qml" : isWeb ? "WebLayer.qml" : "VideoLayer.qml", init);
+                    setSource(isImage ? "ImageLayer.qml" : isWeb ? "WebLayer.qml" : isScene ? "SceneLayer.qml" : "VideoLayer.qml", init);
                 }
                 onLoaded: {
                     item.playing = Qt.binding(() => pauseCtl.shouldPlay
@@ -241,6 +243,9 @@ WallpaperItem {
                         item.props = Qt.binding(() => Util.webOverrides(slot.project, root.cfg.PropertyOverrides));
                         item.audio = Qt.binding(() => root.audioFrame);
                         item.fps = Qt.binding(() => root.cfg.WebFps);
+                    } else if (slot.project.type === "scene") {
+                        item.props = Qt.binding(() => Util.webOverrides(slot.project, root.cfg.PropertyOverrides));
+                        item.fps = Qt.binding(() => root.cfg.ImageFps);
                     } else if (slot.project.type === "image") {
                         item.props = Qt.binding(() => Util.effectiveProps(slot.project, root.cfg.PropertyOverrides));
                         item.fps = Qt.binding(() => root.cfg.ImageFps);

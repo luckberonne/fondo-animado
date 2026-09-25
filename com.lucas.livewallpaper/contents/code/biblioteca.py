@@ -2,7 +2,7 @@
 """Biblioteca de proyectos de Fondo Animado.
 
 Cada proyecto es una carpeta en ~/.local/share/livewallpapers/<slug>/ con:
-  project.json  {"title", "type": "video" | "image" | "web", "file", "preview", "poster", "source"}
+  project.json  {"title", "type": "video" | "image" | "web" | "scene", "file", "preview", "poster", "source"}
                 (los de tipo web usan el mismo project.json de Wallpaper Engine: general.properties, etc.)
   preview.webp  miniatura (animada para videos, ~3 s; fija para imágenes), 320 px
   poster.jpg    primer fotograma a resolución completa (solo videos; se muestra mientras carga)
@@ -163,6 +163,7 @@ def leer_proyecto(carpeta):
         "poster": p.get("poster", ""),
         "properties": p.get("properties") or (p.get("general") or {}).get("properties") or {},
         "audio": bool(p.get("supportsaudioprocessing")),
+        "scene": p.get("scene") or None,
     }
 
 
@@ -176,8 +177,8 @@ def listar():
     salir({"ok": True, "biblioteca": LIB, "proyectos": proyectos})
 
 
-def importar_web(origen, titulo, we):
-    """Fondo web: se copia la carpeta entera (o un .html suelto) y se conserva su project.json."""
+def importar_web(origen, titulo, we, tipo="web"):
+    """Fondo web o escena: se copia la carpeta entera (o un .html suelto) y se conserva su project.json."""
     os.makedirs(LIB, exist_ok=True)
     destino = carpeta_libre(slug(titulo))
     try:
@@ -199,7 +200,7 @@ def importar_web(origen, titulo, we):
     if not preview or not os.path.isfile(os.path.join(destino, preview)):
         preview = next((n for n in ("preview.gif", "preview.webp", "preview.png", "preview.jpg")
                         if os.path.isfile(os.path.join(destino, n))), "")
-    we = dict(we, title=titulo, type="web", file=archivo, preview=preview, source=origen)
+    we = dict(we, title=titulo, type=tipo, file=archivo, preview=preview, source=origen)
     with open(os.path.join(destino, "project.json"), "w", encoding="utf-8") as f:
         json.dump(we, f, ensure_ascii=False, indent=2)
     salir({"ok": True, "proyecto": leer_proyecto(destino)})
@@ -216,10 +217,11 @@ def importar(origen, enlazar, original):
         except (OSError, ValueError):
             error("La carpeta no tiene un project.json válido")
         tipo_we = str(we.get("type", "")).lower()
-        if tipo_we == "web":
-            importar_web(origen, we.get("title") or os.path.basename(origen), we)
+        if tipo_we in ("web", "scene") and (tipo_we == "web" or we.get("scene")):
+            # «scene» = formato propio de Fondo Animado (capas + shaders); las escenas .pkg de WE no se soportan.
+            importar_web(origen, we.get("title") or os.path.basename(origen), we, tipo_we)
         if tipo_we != "video":
-            error(f"Tipo «{we.get('type')}» de Wallpaper Engine no soportado (solo video y web)")
+            error(f"Tipo «{we.get('type')}» no soportado (video, web y escenas de Fondo Animado)")
         video = os.path.join(origen, we.get("file", ""))
         titulo = we.get("title")
     else:

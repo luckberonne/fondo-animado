@@ -5,6 +5,8 @@ Fondos de escritorio animados para KDE Plasma 6, al estilo de Wallpaper Engine.
 ## Qué hace
 - **Videos** en bucle como fondo (mp4, webm, mkv, mov, avi, gif).
 - **Imágenes animadas**: zoom y paneo lentos, más partículas opcionales (nieve, polvo en el aire, luciérnagas).
+- **Escenas**: capas de imagen con movimiento de cámara (paralaje), efectos de shader (agua, brillo, viento) y
+  partículas (nieve, polvo, luciérnagas).
 - **Fondos web** (HTML/JS/canvas) con la API de Wallpaper Engine: propiedades editables y visualizadores que
   reaccionan al audio del sistema.
 - **Biblioteca** con miniaturas animadas: importar, elegir, quitar y rotar fondos cada N minutos.
@@ -69,6 +71,33 @@ Sin implementar todavía: propiedades `file`/`directory`, `applyGeneralPropertie
 Medido con un canvas a pantalla completa: ~6 % de un núcleo a 2 fps, ~14 % a 15, ~22 % a 30 y ~38 % a 60,
 más ~100 MB de memoria. Por eso el tope por defecto es 20 y se pausan sin verse.
 
+## Escenas
+Formato propio: una carpeta con imágenes y un `project.json` con `"type": "scene"` y una lista de capas
+(de atrás hacia adelante). `examples/lago-escena/` es un ejemplo completo (`examples/generar-escena.py` lo genera).
+```json
+"scene": { "layers": [
+  { "image": "cielo.png",    "depth": 0.0 },
+  { "particles": "luciernagas", "count": 22, "depth": 0.15 },
+  { "image": "lago.png",     "depth": 0.55,
+    "effect": { "shader": "agua", "strength": 0.006, "speed": 1.0, "horizon": 0.58 } }
+] }
+```
+- `depth` (0 = lejano, 1 = primer plano): cuánto se mueve la capa con la cámara, que hace una deriva lenta.
+  La amplitud y la velocidad se editan en la configuración (`general.properties`: `parallax`, `velocidad`).
+- Shaders (`contents/shaders/*.frag`, compilar con `qsb --qt6 -o x.frag.qsb x.frag`): `agua` (ondas que crecen con la
+  distancia al horizonte `horizon` + destellos), `brillo` (franja de luz que barre la capa), `viento` (balanceo).
+  Uniformes comunes: `strength`, `speed`, `horizon`.
+- Partículas: `nieve`, `polvo`, `luciernagas`.
+- Todo avanza con un reloj limitado (cuadros/s, «Imágenes y escenas» en la configuración; 20 por defecto) y se pausa
+  con las mismas reglas que el video.
+- Un `poster` (imagen completa) sirve de fondo en la pantalla de bloqueo.
+
+El paralaje **no sigue al puntero**: el motor `mouse` de Plasma usa X11 y tumba plasmashell en Wayland.
+
+**Costo** (escena de ejemplo, 1080p, 20 cuadros/s): ~4 % de un núcleo y ~7 % de la GPU integrada. Las partículas de
+`QtQuick.Particles` costaban ~8 % de CPU y ~14 % de GPU con 50 partículas porque se redibujan a la frecuencia de la
+pantalla sin tope; por eso las partículas se calculan a mano con el reloj limitado.
+
 ## Pantalla de bloqueo
 Configuración del sistema → Bloqueo de pantalla → Apariencia → Fondo de pantalla → «Fondo Animado». Es la misma
 configuración de fondos, pero independiente de la del escritorio. También se puede probar sin bloquear:
@@ -77,7 +106,7 @@ configuración de fondos, pero independiente de la del escritorio. También se p
 El bloqueo lo dibuja otro proceso (`kscreenlocker_greet`) que no hereda el ajuste de GPU de plasmashell: un video
 ahí abre la NVIDIA en una laptop híbrida (medido: 28 descriptores en `/dev/nvidia*` y 22 % de CPU). Por eso, en el
 bloqueo, un video se muestra como su primer fotograma con el zoom lento de las imágenes (0 descriptores, 4 % de
-CPU), y un fondo web como su miniatura si tiene. Las imágenes animadas funcionan igual que en el escritorio.
+CPU), un fondo web como su miniatura si tiene, y una escena como su `poster`. Las imágenes animadas funcionan igual que en el escritorio.
 
 ## Video de prueba
 `examples/generar-prueba.sh` genera un degradado animado 1080p60 con ffmpeg.

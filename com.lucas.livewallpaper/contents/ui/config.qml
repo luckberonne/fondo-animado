@@ -31,7 +31,7 @@ Kirigami.FormLayout {
 
     readonly property var selected: library.find(cfg_Project)
     readonly property var selectedProps: Util.effectiveProps(selected, cfg_PropertyOverrides)
-    readonly property bool isWeb: selected !== null && selected.type === "web"
+    readonly property bool isWeb: selected !== null && (selected.type === "web" || selected.type === "scene")
     readonly property var webOverrides: Util.webOverrides(selected, cfg_PropertyOverrides)
 
     // Propiedades declaradas por un fondo web (formato Wallpaper Engine), en su orden.
@@ -386,7 +386,7 @@ Kirigami.FormLayout {
     }
     QQC2.ComboBox {
         Kirigami.FormData.label: "Cuadros por segundo:"
-        visible: root.isWeb
+        visible: root.selected !== null && root.selected.type === "web"
         textRole: "text"
         valueRole: "value"
         model: [
@@ -408,7 +408,7 @@ Kirigami.FormLayout {
         model: ["Estirar", "Ajustar", "Rellenar (recortar)"]
     }
     QQC2.ComboBox {
-        Kirigami.FormData.label: "Imágenes animadas:"
+        Kirigami.FormData.label: "Imágenes y escenas:"
         textRole: "text"
         valueRole: "value"
         model: [

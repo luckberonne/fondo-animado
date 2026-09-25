@@ -20,6 +20,7 @@ Item {
     signal ready()
     signal failed(string message)
 
+    readonly property bool hasParticles: !!props.particulas && props.particulas !== "ninguna"
     readonly property real zoom: Math.max(0, Number(props.zoom) || 0) / 100
     readonly property real period: Math.max(5, Number(props.periodo) || 40)
 
@@ -28,7 +29,7 @@ Item {
     Timer {
         interval: Math.round(1000 / Math.max(5, layer.fps))
         repeat: true
-        running: layer.playing && layer.isReady && layer.zoom > 0
+        running: layer.playing && layer.isReady && (layer.zoom > 0 || layer.hasParticles)
         onTriggered: layer.t += interval / 1000
     }
 
@@ -72,7 +73,7 @@ Item {
         sourceComponent: Particles {
             preset: layer.props.particulas
             count: Number(layer.props.cantidad) || 60
-            running: layer.playing
+            time: layer.t
         }
     }
 }

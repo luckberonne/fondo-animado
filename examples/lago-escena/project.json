@@ -1,0 +1,61 @@
+{
+  "title": "Lago nocturno (escena)",
+  "type": "scene",
+  "file": "project.json",
+  "preview": "preview.webp",
+  "poster": "poster.jpg",
+  "general": {
+    "properties": {
+      "parallax": {
+        "order": 0,
+        "text": "Movimiento de cámara",
+        "type": "slider",
+        "min": 0,
+        "max": 100,
+        "step": 5,
+        "value": 50
+      },
+      "velocidad": {
+        "order": 1,
+        "text": "Velocidad",
+        "type": "slider",
+        "min": 0,
+        "max": 3,
+        "step": 0.1,
+        "value": 1
+      }
+    }
+  },
+  "scene": {
+    "layers": [
+      {
+        "image": "cielo.png",
+        "depth": 0.0
+      },
+      {
+        "particles": "luciernagas",
+        "count": 22,
+        "depth": 0.15
+      },
+      {
+        "image": "montanas.png",
+        "depth": 0.35
+      },
+      {
+        "image": "lago.png",
+        "depth": 0.55,
+        "effect": {
+          "shader": "agua",
+          "strength": 0.006,
+          "speed": 1.0,
+          "horizon": 0.58
+        }
+      },
+      {
+        "particles": "luciernagas",
+        "count": 30,
+        "depth": 1.0
+      }
+    ]
+  }
+}
