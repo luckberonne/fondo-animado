@@ -1,17 +1,23 @@
 {
     "KPackageStructure": "Plasma/Wallpaper",
     "KPlugin": {
-        "Authors": [{ "Name": "Lucas" }],
+        "Authors": [
+            {
+                "Name": "Lucas"
+            }
+        ],
         "Category": "",
-        "Description": "Fondo de escritorio animado con video en bucle",
-        "Description[es]": "Fondo de escritorio animado con video en bucle",
+        "Description": "Animated wallpapers: videos, animated images, shader scenes and web wallpapers, with a library and smart pausing",
+        "Description[es]": "Fondos animados: videos, imágenes animadas, escenas con shaders y fondos web, con biblioteca y pausa inteligente",
         "EnabledByDefault": true,
         "Icon": "video-x-generic",
         "Id": "com.lucas.livewallpaper",
         "License": "MIT",
-        "Name": "Live Wallpaper",
+        "Name": "Animated Wallpaper",
         "Name[es]": "Fondo Animado",
-        "Version": "0.1"
+        "Version": "1.0.0",
+        "Website": "https://github.com/luckberonne/fondo-animado",
+        "BugReportUrl": "https://github.com/luckberonne/fondo-animado/issues"
     },
     "X-Plasma-API-Minimum-Version": "6.0"
 }

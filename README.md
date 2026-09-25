@@ -2,6 +2,12 @@
 
 Fondos de escritorio animados para KDE Plasma 6, al estilo de Wallpaper Engine.
 
+![Escena de ejemplo: lago nocturno con reflejo, luciérnagas y movimiento de cámara](screenshots/escena-lago.png)
+
+| Panel de configuración | Fondo web con audio |
+|---|---|
+| ![Panel de configuración con la biblioteca](screenshots/panel-configuracion.png) | ![Fondo web que reacciona al audio](screenshots/fondo-web-audio.png) |
+
 ## Qué hace
 - **Videos** en bucle como fondo (mp4, webm, mkv, mov, avi, gif).
 - **Imágenes animadas**: zoom y paneo lentos, más partículas opcionales (nieve, polvo en el aire, luciérnagas).
@@ -17,6 +23,12 @@ Fondos de escritorio animados para KDE Plasma 6, al estilo de Wallpaper Engine.
 - El color de acento de Plasma se toma del fondo.
 
 ## Instalación
+Con el paquete (`tienda/empaquetar.sh` lo genera en `dist/`):
+```sh
+kpackagetool6 --type Plasma/Wallpaper --install dist/com.lucas.livewallpaper-1.0.0.tar.gz
+systemctl --user restart plasma-plasmashell
+```
+O copiando la carpeta:
 ```sh
 cp -r com.lucas.livewallpaper ~/.local/share/plasma/wallpapers/
 systemctl --user restart plasma-plasmashell
