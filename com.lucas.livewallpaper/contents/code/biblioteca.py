@@ -2,14 +2,15 @@
 """Biblioteca de proyectos de Fondo Animado.
 
 Cada proyecto es una carpeta en ~/.local/share/livewallpapers/<slug>/ con:
-  project.json  {"title", "type": "video" | "image", "file", "preview", "poster", "source"}
+  project.json  {"title", "type": "video" | "image" | "web", "file", "preview", "poster", "source"}
+                (los de tipo web usan el mismo project.json de Wallpaper Engine: general.properties, etc.)
   preview.webp  miniatura (animada para videos, ~3 s; fija para imágenes), 320 px
   poster.jpg    primer fotograma a resolución completa (solo videos; se muestra mientras carga)
   <video o imagen>
 
 Uso (toda la salida es JSON en una línea, para leerla desde QML):
   biblioteca.py listar
-  biblioteca.py importar <video | imagen | carpeta de Wallpaper Engine> [--enlazar] [--original]
+  biblioteca.py importar <video | imagen | página .html | carpeta de Wallpaper Engine (video o web)> [--enlazar] [--original]
 
 Al importar un video se optimiza para usarlo de fondo (salvo --original o --enlazar): si pasa de
 30 fps o de 1080p, o está en un códec que la GPU no decodifica, se recodifica a H.264 ≤30 fps con
@@ -160,7 +161,8 @@ def leer_proyecto(carpeta):
         "file": archivo,
         "preview": p.get("preview", ""),
         "poster": p.get("poster", ""),
-        "properties": p.get("properties", {}),
+        "properties": p.get("properties") or (p.get("general") or {}).get("properties") or {},
+        "audio": bool(p.get("supportsaudioprocessing")),
     }
 
 
@@ -174,18 +176,50 @@ def listar():
     salir({"ok": True, "biblioteca": LIB, "proyectos": proyectos})
 
 
+def importar_web(origen, titulo, we):
+    """Fondo web: se copia la carpeta entera (o un .html suelto) y se conserva su project.json."""
+    os.makedirs(LIB, exist_ok=True)
+    destino = carpeta_libre(slug(titulo))
+    try:
+        if os.path.isdir(origen):
+            shutil.copytree(origen, destino, symlinks=False)
+            archivo = we.get("file") or "index.html"
+        else:
+            os.makedirs(destino)
+            archivo = os.path.basename(origen)
+            shutil.copy2(origen, os.path.join(destino, archivo))
+    except OSError as e:
+        shutil.rmtree(destino, ignore_errors=True)
+        error(f"No se pudo importar: {e}")
+    if not os.path.isfile(os.path.join(destino, archivo)):
+        shutil.rmtree(destino, ignore_errors=True)
+        error(f"La carpeta no contiene {archivo}")
+    # Miniatura: la que traiga el proyecto (los del Workshop suelen incluir preview.gif/jpg).
+    preview = we.get("preview") or ""
+    if not preview or not os.path.isfile(os.path.join(destino, preview)):
+        preview = next((n for n in ("preview.gif", "preview.webp", "preview.png", "preview.jpg")
+                        if os.path.isfile(os.path.join(destino, n))), "")
+    we = dict(we, title=titulo, type="web", file=archivo, preview=preview, source=origen)
+    with open(os.path.join(destino, "project.json"), "w", encoding="utf-8") as f:
+        json.dump(we, f, ensure_ascii=False, indent=2)
+    salir({"ok": True, "proyecto": leer_proyecto(destino)})
+
+
 def importar(origen, enlazar, original):
     origen = os.path.abspath(os.path.expanduser(origen))
     titulo = None
     if os.path.isdir(origen):
-        # Carpeta de Wallpaper Engine (Steam Workshop): solo el tipo video por ahora.
+        # Carpeta de Wallpaper Engine (Steam Workshop): tipos video y web.
         try:
             with open(os.path.join(origen, "project.json"), encoding="utf-8") as f:
                 we = json.load(f)
         except (OSError, ValueError):
             error("La carpeta no tiene un project.json válido")
-        if str(we.get("type", "")).lower() != "video":
-            error(f"Tipo «{we.get('type')}» de Wallpaper Engine no soportado (solo video)")
+        tipo_we = str(we.get("type", "")).lower()
+        if tipo_we == "web":
+            importar_web(origen, we.get("title") or os.path.basename(origen), we)
+        if tipo_we != "video":
+            error(f"Tipo «{we.get('type')}» de Wallpaper Engine no soportado (solo video y web)")
         video = os.path.join(origen, we.get("file", ""))
         titulo = we.get("title")
     else:
@@ -193,6 +227,8 @@ def importar(origen, enlazar, original):
     if not os.path.isfile(video):
         error(f"No existe el archivo: {video}")
     ext = os.path.splitext(video)[1].lower()
+    if ext in (".html", ".htm"):
+        importar_web(video, os.path.splitext(os.path.basename(video))[0].replace("_", " "), {})
     if ext in VIDEO_EXT:
         tipo = "video"
     elif ext in IMAGE_EXT:

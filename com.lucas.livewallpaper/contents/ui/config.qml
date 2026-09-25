@@ -3,6 +3,7 @@ import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import org.kde.kirigami as Kirigami
+import org.kde.kquickcontrols as KQuickControls
 import "util.js" as Util
 
 Kirigami.FormLayout {
@@ -22,6 +23,7 @@ Kirigami.FormLayout {
     property alias cfg_PauseOnLock: pauseLock.checked
     property string cfg_PropertyOverrides: "{}"
     property int cfg_ImageFps: 20
+    property int cfg_WebFps: 20
     property alias cfg_PlaylistEnabled: playlistEnabled.checked
     property alias cfg_PlaylistMinutes: playlistMinutes.value
     property alias cfg_PlaylistRandom: playlistRandom.checked
@@ -29,6 +31,21 @@ Kirigami.FormLayout {
 
     readonly property var selected: library.find(cfg_Project)
     readonly property var selectedProps: Util.effectiveProps(selected, cfg_PropertyOverrides)
+    readonly property bool isWeb: selected !== null && selected.type === "web"
+    readonly property var webOverrides: Util.webOverrides(selected, cfg_PropertyOverrides)
+
+    // Propiedades declaradas por un fondo web (formato Wallpaper Engine), en su orden.
+    readonly property var webPropList: {
+        const d = (selected && selected.properties) || {};
+        return Object.keys(d).filter(k => d[k] && d[k].type && d[k].text !== undefined)
+                             .sort((a, b) => (d[a].order || 0) - (d[b].order || 0))
+                             .map(k => Object.assign({ name: k }, d[k]));
+    }
+    function webValue(p) { return webOverrides[p.name] !== undefined ? webOverrides[p.name] : p.value }
+    function toColor(v) {
+        const c = String(v).split(" ").map(Number);
+        return Qt.rgba(c[0] || 0, c[1] || 0, c[2] || 0, 1);
+    }
 
     function select(dir) {
         cfg_Project = dir;
@@ -172,10 +189,18 @@ Kirigami.FormLayout {
                                 asynchronous: true
                                 cache: false
 
+                                // Sin miniatura (p. ej. una página web): ícono grande del tipo.
+                                Kirigami.Icon {
+                                    anchors.centerIn: parent
+                                    visible: !tile.modelData.preview
+                                    width: Kirigami.Units.iconSizes.huge; height: width
+                                    source: tile.modelData.type === "web" ? "text-html" : "video-x-generic"
+                                }
                                 Kirigami.Icon {
                                     anchors { left: parent.left; bottom: parent.bottom; margins: Kirigami.Units.smallSpacing }
                                     width: Kirigami.Units.iconSizes.small; height: width
-                                    source: tile.modelData.type === "image" ? "image-x-generic" : "video-x-generic"
+                                    source: tile.modelData.type === "image" ? "image-x-generic"
+                                          : tile.modelData.type === "web" ? "text-html" : "video-x-generic"
                                 }
                                 QQC2.CheckBox {
                                     anchors { right: parent.right; top: parent.top }
@@ -296,6 +321,82 @@ Kirigami.FormLayout {
             onMoved: root.setProp("cantidad", value)
         }
         QQC2.Label { text: countSlider.value }
+    }
+
+    // ---------- propiedades de un fondo web ----------
+    // Filas propias (no un Repeater directo dentro del FormLayout, que le rompe el diseño).
+    ColumnLayout {
+        Kirigami.FormData.label: "Propiedades:"
+        Kirigami.FormData.labelAlignment: Qt.AlignTop
+        visible: root.isWeb && root.webPropList.length > 0
+        spacing: Kirigami.Units.smallSpacing
+
+        Repeater {
+            model: root.isWeb ? root.webPropList : []
+            delegate: RowLayout {
+                id: prop
+                required property var modelData
+                readonly property string kind: modelData.type
+                spacing: Kirigami.Units.largeSpacing
+
+                QQC2.Label {
+                    Layout.preferredWidth: Kirigami.Units.gridUnit * 8
+                    text: prop.modelData.text
+                    elide: Text.ElideRight
+                }
+                KQuickControls.ColorButton {
+                    visible: prop.kind === "color"
+                    color: root.toColor(root.webValue(prop.modelData))
+                    showAlphaChannel: false
+                    onAccepted: (c) => root.setProp(prop.modelData.name, c.r.toFixed(3) + " " + c.g.toFixed(3) + " " + c.b.toFixed(3))
+                }
+                QQC2.Slider {
+                    visible: prop.kind === "slider"
+                    from: Number(prop.modelData.min) || 0
+                    to: prop.modelData.max !== undefined ? Number(prop.modelData.max) : 100
+                    stepSize: Number(prop.modelData.step) || 0
+                    value: Number(root.webValue(prop.modelData))
+                    onMoved: root.setProp(prop.modelData.name, value)
+                }
+                QQC2.Label {
+                    visible: prop.kind === "slider"
+                    text: Number(root.webValue(prop.modelData)).toFixed(prop.modelData.step && prop.modelData.step < 1 ? 1 : 0)
+                }
+                QQC2.CheckBox {
+                    visible: prop.kind === "bool"
+                    checked: !!root.webValue(prop.modelData)
+                    onToggled: root.setProp(prop.modelData.name, checked)
+                }
+                QQC2.ComboBox {
+                    visible: prop.kind === "combo"
+                    model: prop.modelData.options || []
+                    textRole: "label"
+                    valueRole: "value"
+                    currentIndex: Math.max(0, indexOfValue(root.webValue(prop.modelData)))
+                    onActivated: root.setProp(prop.modelData.name, currentValue)
+                }
+                QQC2.TextField {
+                    visible: prop.kind === "textinput"
+                    Layout.preferredWidth: Kirigami.Units.gridUnit * 14
+                    text: String(root.webValue(prop.modelData))
+                    onEditingFinished: root.setProp(prop.modelData.name, text)
+                }
+            }
+        }
+    }
+    QQC2.ComboBox {
+        Kirigami.FormData.label: "Cuadros por segundo:"
+        visible: root.isWeb
+        textRole: "text"
+        valueRole: "value"
+        model: [
+            { text: "10 (ahorro)", value: 10 },
+            { text: "20", value: 20 },
+            { text: "30", value: 30 },
+            { text: "60 (más fluido, gasta más)", value: 60 }
+        ]
+        currentIndex: Math.max(0, indexOfValue(root.cfg_WebFps))
+        onActivated: root.cfg_WebFps = currentValue
     }
 
     // ---------- general ----------

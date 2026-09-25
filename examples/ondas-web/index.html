@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#05060a}canvas{display:block;width:100%;height:100%}</style>
+<script>
+// Definir el listener al principio, como pide Wallpaper Engine, para no perder eventos.
+var P = { color: [0.2, 0.6, 1.0], speed: 1, bars: true, style: 'ondas' };
+window.wallpaperPropertyListener = {
+  applyUserProperties: function (p) {
+    if (p.schemecolor) P.color = p.schemecolor.value.split(' ').map(Number);
+    if (p.speed) P.speed = p.speed.value;
+    if (p.bars) P.bars = p.bars.value;
+    if (p.style) P.style = p.style.value;
+  }
+};
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+var cv = document.getElementById('c'), g = cv.getContext('2d'), t = 0, audio = new Array(128).fill(0);
+function fit() { cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio; }
+addEventListener('resize', fit); fit();
+function rgb(a) { return 'rgba(' + P.color.map(function (v) { return Math.round(v * 255); }).join(',') + ',' + a + ')'; }
+function frame() {
+  var w = cv.width, h = cv.height; t += 0.016 * P.speed;
+  g.fillStyle = '#05060a'; g.fillRect(0, 0, w, h);
+  for (var k = 0; k < 5; k++) {
+    g.beginPath();
+    for (var x = 0; x <= w; x += (P.style === 'puntos' ? 24 : 8)) {
+      var y = h * (0.45 + 0.05 * k) + Math.sin(x / w * 6 + t + k) * h * 0.06 * (1 + k * 0.3);
+      if (P.style === 'puntos') { g.moveTo(x + 4, y); g.arc(x, y, 4, 0, 6.3); } else if (x === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.strokeStyle = rgb(0.9 - k * 0.15); g.fillStyle = rgb(0.9 - k * 0.15); g.lineWidth = 3 * devicePixelRatio;
+    P.style === 'puntos' ? g.fill() : g.stroke();
+  }
+  if (P.bars) {
+    var n = 64, bw = w / n;
+    for (var i = 0; i < n; i++) {
+      var v = Math.min((audio[i] + audio[64 + i]) / 2, 1), bh = v * h * 0.4;
+      g.fillStyle = rgb(0.6); g.fillRect(i * bw + 2, h - bh, bw - 4, bh);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+<!-- Una sola vez, al final del body. -->
+<script>
+window.wallpaperRegisterAudioListener(function (a) { audio = a; });
+</script>
+</body>
+</html>

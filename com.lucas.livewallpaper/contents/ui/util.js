@@ -36,3 +36,10 @@ function effectiveProps(p, overridesJson) {
     try { over = JSON.parse(overridesJson || "{}"); } catch (e) { over = {}; }
     return Object.assign(base, (p && over[p.dir]) || {});
 }
+
+// Valores editados de un proyecto web: {nombre: valor} (los defaults viven en el project.json).
+function webOverrides(p, overridesJson) {
+    let over = {};
+    try { over = JSON.parse(overridesJson || "{}"); } catch (e) { over = {}; }
+    return (p && over[p.dir]) || {};
+}

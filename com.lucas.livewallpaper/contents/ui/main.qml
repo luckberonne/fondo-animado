@@ -9,6 +9,9 @@ WallpaperItem {
 
     readonly property var cfg: root.configuration
 
+    // Último cuadro de audio (128 valores) para los fondos web; lo llena AudioFeed.
+    property var audioFrame: []
+
     // ---------- proyecto activo ----------
     Library {
         id: library
@@ -42,6 +45,13 @@ WallpaperItem {
         if (!p && !projectDir && legacyUrl)
             p = { dir: "", url: legacyUrl, type: "video", title: "", properties: {} };
         stage.show(p);
+    }
+
+    // ---------- audio para los fondos web ----------
+    AudioFeed {
+        id: audioFeed
+        active: stage.shown !== null && stage.shown.type === "web" && !!stage.shown.audio && pauseCtl.shouldPlay
+        onFrameChanged: root.audioFrame = frame
     }
 
     // ---------- soltar archivos sobre el escritorio ----------
@@ -199,10 +209,13 @@ WallpaperItem {
                     // Valores iniciales al crear la capa (así la imagen se decodifica una sola vez
                     // al tamaño correcto); después se reemplazan por bindings en onLoaded.
                     const isImage = project.type === "image";
+                    const isWeb = project.type === "web";
                     const init = { project: project, fillMode: root.cfg.FillMode };
                     if (isImage)
                         init.props = Util.effectiveProps(project, root.cfg.PropertyOverrides);
-                    setSource(isImage ? "ImageLayer.qml" : "VideoLayer.qml", init);
+                    else if (isWeb)
+                        init.props = Util.webOverrides(project, root.cfg.PropertyOverrides);
+                    setSource(isImage ? "ImageLayer.qml" : isWeb ? "WebLayer.qml" : "VideoLayer.qml", init);
                 }
                 onLoaded: {
                     item.playing = Qt.binding(() => pauseCtl.shouldPlay
@@ -210,7 +223,11 @@ WallpaperItem {
                     item.fillMode = Qt.binding(() => root.cfg.FillMode);
                     item.muted = Qt.binding(() => root.cfg.Muted);
                     item.volume = Qt.binding(() => root.cfg.Volume / 100);
-                    if (slot.project.type === "image") {
+                    if (slot.project.type === "web") {
+                        item.props = Qt.binding(() => Util.webOverrides(slot.project, root.cfg.PropertyOverrides));
+                        item.audio = Qt.binding(() => root.audioFrame);
+                        item.fps = Qt.binding(() => root.cfg.WebFps);
+                    } else if (slot.project.type === "image") {
                         item.props = Qt.binding(() => Util.effectiveProps(slot.project, root.cfg.PropertyOverrides));
                         item.fps = Qt.binding(() => root.cfg.ImageFps);
                     }
