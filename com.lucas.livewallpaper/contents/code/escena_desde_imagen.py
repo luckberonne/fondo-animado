@@ -2,7 +2,7 @@
 """Crea una escena de Fondo Animado desde una imagen: lo oscuro grande (los personajes) queda quieto y el
 resto (esquirlas, explosiones, humo) se mueve con un shader. Sin dependencias (usa ffmpeg).
 
-Uso: escena_desde_imagen.py imagen.jpg [carpeta_salida] [--titulo T] [--fuerza 0.012] [--velocidad 1]
+Uso: escena_desde_imagen.py imagen.jpg [carpeta_salida] [--titulo T] [--fuerza 0.006] [--velocidad 0.4]
                                        [--umbral 40] [--area-min 0.008] [--quieto x,y]... [--mueve x,y]... [--importar]
 
 Genera en la carpeta: imagen.jpg (1920x1080), mascara.png, poster.jpg, preview.webp y project.json.
@@ -26,7 +26,7 @@ def opt(name, default, cast=str):
         i = args.index(name); v = cast(args[i + 1]); del args[i:i + 2]; return v
     return default
 umbral = opt("--umbral", 40, int); area_min = opt("--area-min", 0.008, float)
-titulo = opt("--titulo", None); fuerza = opt("--fuerza", 0.012, float); velocidad = opt("--velocidad", 1.0, float)
+titulo = opt("--titulo", None); fuerza = opt("--fuerza", 0.006, float); velocidad = opt("--velocidad", 0.4, float)
 def opt_multi(name):
     vals = []
     while name in args:

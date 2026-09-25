@@ -98,7 +98,7 @@ Formato propio: una carpeta con imágenes y un `project.json` con `"type": "scen
 personajes) queda quieto y el resto (esquirlas, fluidos, salpicaduras) se mueve con el shader `explosion`.
 ```sh
 contents/code/escena_desde_imagen.py ilustracion.jpg --titulo "Gengar explosiones" --importar
-# afinar: --umbral 40 (más bajo = solo lo más oscuro queda quieto), --fuerza 0.012, --velocidad 1
+# afinar: --umbral 40 (más bajo = solo lo más oscuro queda quieto), --fuerza 0.006, --velocidad 0.4
 # forzar regiones concretas (coordenadas en 1920x1080; la salida lista cada región con su centro):
 #   --quieto 503,278   --mueve 1719,806
 ```
