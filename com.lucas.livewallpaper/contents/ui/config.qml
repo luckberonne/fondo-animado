@@ -8,9 +8,17 @@ import "util.js" as Util
 
 Kirigami.FormLayout {
     id: root
-    twinFormLayouts: parentLayout
+    // parentLayout lo define el diálogo que nos crea; se tolera que falte.
+    twinFormLayouts: typeof parentLayout === "undefined" || !parentLayout ? [] : parentLayout
 
     property var configDialog
+    // Los módulos de Bloqueo de pantalla e Inicio de sesión crean este panel con estas propiedades iniciales;
+    // si no existen, la creación falla («does not have a property called wallpaperConfiguration»).
+    property var wallpaperConfiguration
+    property string cfg_PreviewImage
+    property string cfg_PreviewImageDefault
+    property var cfg_DarkLightScheduleState
+    property var cfg_DarkLightScheduleStateDefault
     property alias formLayout: root
 
     property string cfg_Project
