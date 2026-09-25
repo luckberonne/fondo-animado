@@ -130,6 +130,19 @@ bloqueo, un video se muestra como su primer fotograma con el zoom lento de las i
 CPU), un fondo web como su miniatura si tiene, y una escena como su `poster`. Las imágenes animadas y las escenas (capas y shaders, sin video ni WebEngine) funcionan igual que en el escritorio:
 ~2 % de CPU y sin abrir la NVIDIA.
 
+## Pantalla de inicio de sesión (Plasma Login Manager)
+La dibuja otro usuario del sistema (`plasmalogin`): no ve tu carpeta personal y solo lista los fondos instalados en
+todo el sistema, así que «Fondo Animado» no aparece ahí hasta instalarlo. `sistema/instalar-login.sh` (como root):
+```sh
+sudo sh sistema/instalar-login.sh instalar gengar-ojos-rojos     # plugin en /usr/share + copia el proyecto
+sudo sh sistema/instalar-login.sh activar gengar-ojos-rojos      # lo elige en /etc/plasmalogin.conf (guarda un respaldo)
+sudo sh sistema/instalar-login.sh quitar                         # deshace todo
+sh sistema/instalar-login.sh simular instalar gengar-ojos-rojos  # muestra qué haría, sin tocar nada
+```
+Se comporta como el bloqueo: escenas e imágenes se animan; un video se ve como su primer fotograma. Si el proyecto
+elegido en Configuración del sistema es de tu carpeta personal, se usa el de igual nombre de la biblioteca de
+`plasmalogin` (el script lo copia).
+
 ## Video de prueba
 `examples/generar-prueba.sh` genera un degradado animado 1080p60 con ffmpeg.
 

@@ -25,6 +25,14 @@ QtObject {
         for (let i = 0; i < projects.length; i++)
             if (projects[i].dir === dir)
                 return projects[i];
+        // Si la ruta guardada no existe para este usuario (p. ej. la pantalla de inicio de sesión corre como
+        // otro usuario y no ve tu carpeta personal), se busca un proyecto con el mismo nombre en su propia biblioteca.
+        const base = String(dir).split("/").pop();
+        if (base) {
+            for (let i = 0; i < projects.length; i++)
+                if (projects[i].dir.split("/").pop() === base)
+                    return projects[i];
+        }
         return null;
     }
 
