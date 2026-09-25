@@ -4,6 +4,9 @@
       xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
   <kcfgfile name=""/>
   <group name="General">
+    <!-- Carpeta del proyecto en la biblioteca (~/.local/share/livewallpapers/<slug>) -->
+    <entry name="Project" type="String"><default></default></entry>
+    <!-- Video suelto (versión 0.1, antes de la biblioteca); se usa solo si Project está vacío -->
     <entry name="VideoUrl" type="String"><default></default></entry>
     <!-- 0 = Estirar, 1 = Ajustar, 2 = Rellenar (recortar) -->
     <entry name="FillMode" type="Int"><default>2</default></entry>
@@ -12,5 +15,14 @@
     <entry name="PauseOnMaximized" type="Bool"><default>true</default></entry>
     <entry name="PauseOnBattery" type="Bool"><default>false</default></entry>
     <entry name="PauseOnLock" type="Bool"><default>true</default></entry>
+    <!-- Cuadros por segundo de las imágenes animadas (el zoom lento no necesita más) -->
+    <entry name="ImageFps" type="Int"><default>20</default></entry>
+    <!-- Propiedades editadas por proyecto: JSON {"<carpeta>": {"zoom": 8, ...}} -->
+    <entry name="PropertyOverrides" type="String"><default>{}</default></entry>
+    <entry name="PlaylistEnabled" type="Bool"><default>false</default></entry>
+    <entry name="PlaylistMinutes" type="Int"><default>15</default></entry>
+    <entry name="PlaylistRandom" type="Bool"><default>false</default></entry>
+    <!-- Carpetas incluidas en la rotación; vacío = toda la biblioteca -->
+    <entry name="PlaylistProjects" type="StringList"><default></default></entry>
   </group>
 </kcfg>
