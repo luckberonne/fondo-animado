@@ -42,9 +42,7 @@ WallpaperItem {
     // plasmashell: un video ahí abre la NVIDIA y la despierta. Allí se muestra el primer fotograma con el
     // zoom lento de las imágenes; un fondo web, su miniatura (si tiene); y no se pausa por bloqueo ni ventanas.
     // Las escenas sí se animan (no usan video ni WebEngine).
-    // También la pantalla de inicio de sesión (Plasma Login Manager): otro proceso, con otro usuario del sistema.
     readonly property bool isLockScreen: Qt.application.name === "kscreenlocker_greet"
-                                         || Qt.application.name === "plasma-login-greeter"
 
     function forLockScreen(p) {
         // Imágenes y escenas (solo shaders y capas de imagen: no abren la NVIDIA) se ven animadas.
