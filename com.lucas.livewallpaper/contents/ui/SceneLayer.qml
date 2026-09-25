@@ -104,14 +104,35 @@ Item {
                     }
                 }
 
+                // Máscara opcional del efecto (p. ej. «explosion»): qué zonas se quedan quietas.
+                Image {
+                    id: maskImg
+                    anchors.fill: parent
+                    visible: false
+                    source: wrap.modelData.effect && wrap.modelData.effect.mask
+                            ? Util.assetUrl(scn.project, wrap.modelData.effect.mask) : ""
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    cache: false
+                    sourceSize: Qt.size(960, 540)
+                }
+
                 ShaderEffect {
                     anchors.fill: parent
                     visible: !!wrap.modelData.effect && img.status === Image.Ready
+                             && (!wrap.modelData.effect.mask || maskImg.status === Image.Ready)
                     property variant source: img
+                    property variant mask: maskImg
                     property real time: scn.t
-                    property real strength: wrap.modelData.effect ? Number(wrap.modelData.effect.strength) || 0.005 : 0
+                    // La intensidad puede editarse desde la configuración (strengthProp = nombre de la propiedad).
+                    property real strength: !wrap.modelData.effect ? 0
+                        : wrap.modelData.effect.strengthProp
+                            ? scn.prop(wrap.modelData.effect.strengthProp, Number(wrap.modelData.effect.strength) || 0.005)
+                            : Number(wrap.modelData.effect.strength) || 0.005
                     property real speed: wrap.modelData.effect ? Number(wrap.modelData.effect.speed) || 1 : 1
                     property real horizon: wrap.modelData.effect ? Number(wrap.modelData.effect.horizon) || 0 : 0
+                    property real cx: wrap.modelData.effect ? Number(wrap.modelData.effect.cx) || 0.5 : 0.5
+                    property real cy: wrap.modelData.effect ? Number(wrap.modelData.effect.cy) || 0.5 : 0.5
                     fragmentShader: wrap.modelData.effect
                         ? Qt.resolvedUrl("../shaders/" + wrap.modelData.effect.shader + ".frag.qsb") : ""
                 }

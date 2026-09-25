@@ -85,12 +85,27 @@ Formato propio: una carpeta con imágenes y un `project.json` con `"type": "scen
 - `depth` (0 = lejano, 1 = primer plano): cuánto se mueve la capa con la cámara, que hace una deriva lenta.
   La amplitud y la velocidad se editan en la configuración (`general.properties`: `parallax`, `velocidad`).
 - Shaders (`contents/shaders/*.frag`, compilar con `qsb --qt6 -o x.frag.qsb x.frag`): `agua` (ondas que crecen con la
-  distancia al horizonte `horizon` + destellos), `brillo` (franja de luz que barre la capa), `viento` (balanceo).
+  distancia al horizonte `horizon` + destellos), `brillo` (franja de luz que barre la capa), `viento` (balanceo),
+  `explosion` (mueve solo lo que una máscara `mask` marca como libre y hace titilar los brillos).
   Uniformes comunes: `strength`, `speed`, `horizon`.
 - Partículas: `nieve`, `polvo`, `luciernagas`.
 - Todo avanza con un reloj limitado (cuadros/s, «Imágenes y escenas» en la configuración; 20 por defecto) y se pausa
   con las mismas reglas que el video.
 - Un `poster` (imagen completa) sirve de fondo en la pantalla de bloqueo.
+
+### Animar una imagen: personajes quietos, explosiones en movimiento
+`contents/code/escena_desde_imagen.py` arma una escena desde cualquier ilustración: lo oscuro y grande (los
+personajes) queda quieto y el resto (esquirlas, fluidos, salpicaduras) se mueve con el shader `explosion`.
+```sh
+contents/code/escena_desde_imagen.py ilustracion.jpg --titulo "Gengar explosiones" --importar
+# afinar: --umbral 40 (más bajo = solo lo más oscuro queda quieto), --fuerza 0.012, --velocidad 1
+# forzar regiones concretas (coordenadas en 1920x1080; la salida lista cada región con su centro):
+#   --quieto 503,278   --mueve 1719,806
+```
+Detecta los personajes por luminancia, rellena lo que encierran (boca, ojos) solo si es cálido (los fluidos
+azules o violetas rodeados de sombra se siguen moviendo) y usa una máscara suave. Con el Gengar de ejemplo: 0 % de
+los píxeles de la cara y la sonrisa cambian, y entre el 14 % y el 39 % de los de los fluidos y esquirlas.
+La intensidad y la velocidad se editan en la configuración. Costo a 1080p y 20 cuadros/s: ~2,6 % de CPU y ~13 % de GPU.
 
 El paralaje **no sigue al puntero**: el motor `mouse` de Plasma usa X11 y tumba plasmashell en Wayland.
 
