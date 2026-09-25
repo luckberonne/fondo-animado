@@ -69,6 +69,16 @@ Sin implementar todavía: propiedades `file`/`directory`, `applyGeneralPropertie
 Medido con un canvas a pantalla completa: ~6 % de un núcleo a 2 fps, ~14 % a 15, ~22 % a 30 y ~38 % a 60,
 más ~100 MB de memoria. Por eso el tope por defecto es 20 y se pausan sin verse.
 
+## Pantalla de bloqueo
+Configuración del sistema → Bloqueo de pantalla → Apariencia → Fondo de pantalla → «Fondo Animado». Es la misma
+configuración de fondos, pero independiente de la del escritorio. También se puede probar sin bloquear:
+`/usr/lib/kscreenlocker_greet --testing`.
+
+El bloqueo lo dibuja otro proceso (`kscreenlocker_greet`) que no hereda el ajuste de GPU de plasmashell: un video
+ahí abre la NVIDIA en una laptop híbrida (medido: 28 descriptores en `/dev/nvidia*` y 22 % de CPU). Por eso, en el
+bloqueo, un video se muestra como su primer fotograma con el zoom lento de las imágenes (0 descriptores, 4 % de
+CPU), y un fondo web como su miniatura si tiene. Las imágenes animadas funcionan igual que en el escritorio.
+
 ## Video de prueba
 `examples/generar-prueba.sh` genera un degradado animado 1080p60 con ffmpeg.
 

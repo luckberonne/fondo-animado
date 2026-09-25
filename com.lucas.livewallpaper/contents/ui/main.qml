@@ -38,13 +38,27 @@ WallpaperItem {
     readonly property string legacyUrl: cfg.VideoUrl
     onLegacyUrlChanged: resolveProject()
 
+    // La pantalla de bloqueo la dibuja otro proceso (kscreenlocker_greet), que no hereda el ajuste de GPU de
+    // plasmashell: un video ahí abre la NVIDIA y la despierta. Allí se muestra el primer fotograma con el
+    // zoom lento de las imágenes; un fondo web, su miniatura (si tiene); y no se pausa por bloqueo ni ventanas.
+    readonly property bool isLockScreen: Qt.application.name === "kscreenlocker_greet"
+
+    function forLockScreen(p) {
+        if (!p || p.type === "image")
+            return p;
+        const still = p.poster || p.preview;
+        if (!still || !p.dir)
+            return null;
+        return Object.assign({}, p, { type: "image", file: still, poster: "", preview: "", audio: false, properties: {} });
+    }
+
     function resolveProject() {
         if (!library.loaded)
             return;
         let p = projectDir ? library.find(projectDir) : null;
         if (!p && !projectDir && legacyUrl)
             p = { dir: "", url: legacyUrl, type: "video", title: "", properties: {} };
-        stage.show(p);
+        stage.show(isLockScreen ? forLockScreen(p) : p);
     }
 
     // ---------- audio para los fondos web ----------
@@ -113,9 +127,9 @@ WallpaperItem {
     PauseController {
         id: pauseCtl
         anchors.fill: parent
-        pauseOnMaximized: root.cfg.PauseOnMaximized
+        pauseOnMaximized: root.cfg.PauseOnMaximized && !root.isLockScreen
         pauseOnBattery: root.cfg.PauseOnBattery
-        pauseOnLock: root.cfg.PauseOnLock
+        pauseOnLock: root.cfg.PauseOnLock && !root.isLockScreen
     }
 
     Rectangle {
