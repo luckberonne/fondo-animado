@@ -3,7 +3,7 @@
 resto (esquirlas, explosiones, humo) se mueve con un shader. Sin dependencias (usa ffmpeg).
 
 Uso: escena_desde_imagen.py imagen.jpg [carpeta_salida] [--titulo T] [--fuerza 0.006] [--velocidad 0.4]
-                                       [--umbral 40] [--area-min 0.008] [--quieto x,y]... [--mueve x,y]... [--importar]
+                                       [--umbral 40] [--area-min 0.008] [--abrir N] [--poligono "x,y x,y ..."] [--quieto x,y]... [--mueve x,y]... [--brillo x,y]... [--importar]
 
 Genera en la carpeta: imagen.jpg (1920x1080), mascara.png, poster.jpg, preview.webp y project.json.
 Con --importar la agrega a la biblioteca (~/.local/share/livewallpapers).
@@ -13,8 +13,14 @@ Cómo se decide qué queda quieto:
 2. Cierra las rendijas finas del contorno, inunda el «exterior» desde los bordes por los píxeles claros: lo que no
    se alcanza (boca, ojos, brillos dentro del personaje) queda encerrado y cuenta como personaje.
 3. Se quedan solo las regiones grandes (área > area-min del cuadro): las esquirlas oscuras sueltas se mueven.
+   Con --abrir N (p. ej. 6) se despegan del cuerpo las esquirlas delgadas y sueltas, tan oscuras como él: se
+   quita lo más fino que 2N píxeles (de 480x270) y se recupera el contorno del núcleo; esas esquirlas se mueven.
+   Con --poligono "x,y x,y ..." (1920x1080) solo puede quedarse quieto lo que cae dentro del polígono: útil cuando
+   las esquirlas son tan oscuras como el personaje y están pegadas a él.
    Con --quieto x,y / --mueve x,y (coordenadas en 1920x1080) se fuerza una región concreta a quedarse quieta o a
    moverse (la salida lista cada región con su centro, para elegir).
+   Con --brillo x,y (una por ojo) se crea una capa de brillo que late sobre esas zonas: se toma el color de la
+   semilla y se extiende a los píxeles vecinos parecidos (--tolerancia-brillo, 90 por defecto).
 4. Se agranda un poco y se suaviza al subir a 1920x1080 (blanco = quieto, negro = se mueve).
 """
 import json, os, re, subprocess, sys, unicodedata
@@ -33,6 +39,10 @@ def opt_multi(name):
         i = args.index(name); vals.append(tuple(int(v) for v in args[i + 1].split(","))); del args[i:i + 2]
     return vals
 quietos = opt_multi("--quieto"); mueves = opt_multi("--mueve")     # puntos (x,y) en 1920x1080
+abrir = opt("--abrir", 0, int)                                      # radio de apertura (px de 480x270)
+poligono = opt("--poligono", None)                                  # "x,y x,y ..." en 1920x1080: lo quieto se limita a esa zona
+brillos = opt_multi("--brillo")                                     # semillas de zonas que brillan (ojos)
+fuerza_brillo = opt("--fuerza-brillo", 0.9, float); tol_brillo = opt("--tolerancia-brillo", 90, int)
 importar = "--importar" in args
 if importar: args.remove("--importar")
 if not args:
@@ -118,6 +128,21 @@ for s0 in range(W * H):
             print(f"relleno {n / (W * H) * 100:.2f} % en ({sum(i % W for i in comp) * 4 // n},{sum(i // W for i in comp) * 4 // n}): "
                   f"{'cálido → quieto' if warm else 'frío → se mueve'}", file=sys.stderr)
 
+if poligono:
+    pts = [tuple(int(v) for v in pt.split(",")) for pt in poligono.split()]
+    def dentro(px, py):
+        ok = False
+        for (x1, y1), (x2, y2) in zip(pts, pts[1:] + pts[:1]):
+            if (y1 > py) != (y2 > py) and px < (x2 - x1) * (py - y1) / (y2 - y1) + x1:
+                ok = not ok
+        return ok
+    static = [static[i] and dentro((i % W) * 4 + 2, (i // W) * 4 + 2) for i in range(W * H)]
+
+if abrir:
+    core = shrink(static, abrir)
+    core = [c and st for c, st in zip(grow(core, abrir), static)]      # dilatar de vuelta, sin salirse de lo original
+    static = core
+
 # componentes conexos: solo los grandes (más los forzados a mano)
 label = [0] * (W * H); comps = {}; n = 0
 for s0 in range(W * H):
@@ -157,6 +182,37 @@ subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "raw
                 "-vf", "dilation,dilation,dilation,scale=1920:1080:flags=bicubic,boxblur=7:2", "-frames:v", "1", dst],
                input=gray, check=True)
 
+# ---------- zonas que brillan (ojos): crecimiento de región por color desde cada semilla ----------
+glow_color = None
+if brillos:
+    def rgb_at(i): return (rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2])
+    glow = [False] * (W * H)
+    sumc = [0, 0, 0]; nglow = 0
+    for px, py in brillos:
+        sx, sy = min(W - 1, px // 4), min(H - 1, py // 4); si = sy * W + sx; sc = rgb_at(si)
+        stack = [si]; seenb = {si}
+        while stack:
+            i = stack.pop(); x, y = i % W, i // W
+            glow[i] = True; sumc[0] += rgb_at(i)[0]; sumc[1] += rgb_at(i)[1]; sumc[2] += rgb_at(i)[2]; nglow += 1
+            for j, ok in ((i - 1, x > 0), (i + 1, x < W - 1), (i - W, y > 0), (i + W, y < H - 1)):
+                if ok and j not in seenb:
+                    seenb.add(j)
+                    c = rgb_at(j)
+                    if (abs(j % W - sx) < 90 and abs(j // W - sy) < 90 and lum[j] > 50 and
+                            (c[0] - sc[0]) ** 2 + (c[1] - sc[1]) ** 2 + (c[2] - sc[2]) ** 2 < tol_brillo ** 2):
+                        stack.append(j)
+        print(f"brillo en ({px},{py}): {sum(1 for v in glow if v)} px (480x270), color semilla {sc}", file=sys.stderr)
+    if nglow:
+        m = max(sumc) / nglow
+        glow_color = [round(sumc[0] / nglow / max(m, 1), 3), round(sumc[1] / nglow / max(m, 1), 3), round(sumc[2] / nglow / max(m, 1), 3)]
+        glow_color = [min(1.0, c * 1.0) for c in glow_color]
+    gray_glow = bytes(255 if g else 0 for g in glow)
+    # núcleo suave + halo ancho (más tenue) → una sola máscara con resplandor alrededor
+    subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "rawvideo", "-pix_fmt", "gray", "-s", f"{W}x{H}", "-i", "-",
+                    "-filter_complex", "[0]dilation,scale=1920:1080:flags=bicubic,split[c][h];[c]boxblur=5:2[cc];"
+                    "[h]boxblur=36:3,lutyuv=y=val*0.6[hh];[cc][hh]blend=all_mode=lighten", "-frames:v", "1",
+                    os.path.join(out, "ojos.png")], input=gray_glow, check=True)
+
 # ---------- imagen a 1920x1080, póster, miniatura y project.json ----------
 def ff(*a):
     subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", *a], check=True)
@@ -168,7 +224,9 @@ json.dump({
     "general": {"properties": {
         "parallax": {"order": 0, "text": "Movimiento de cámara", "type": "slider", "min": 0, "max": 100, "step": 5, "value": 0},
         "velocidad": {"order": 1, "text": "Velocidad", "type": "slider", "min": 0, "max": 3, "step": 0.1, "value": velocidad},
-        "fuerza": {"order": 2, "text": "Intensidad", "type": "slider", "min": 0, "max": 0.03, "step": 0.001, "value": fuerza}
+        "fuerza": {"order": 2, "text": "Intensidad", "type": "slider", "min": 0, "max": 0.03, "step": 0.001, "value": fuerza},
+        **({"brillo": {"order": 3, "text": "Brillo de los ojos", "type": "slider", "min": 0, "max": 2, "step": 0.05,
+                       "value": fuerza_brillo}} if brillos else {})
     }},
     "scene": {"layers": [
         {"image": "imagen.jpg", "depth": 0.0,

@@ -131,6 +131,9 @@ Item {
                             : Number(wrap.modelData.effect.strength) || 0.005
                     property real speed: wrap.modelData.effect ? Number(wrap.modelData.effect.speed) || 1 : 1
                     property real horizon: wrap.modelData.effect ? Number(wrap.modelData.effect.horizon) || 0 : 0
+                    property real cr: wrap.modelData.effect && wrap.modelData.effect.color ? Number(wrap.modelData.effect.color[0]) : 1
+                    property real cg: wrap.modelData.effect && wrap.modelData.effect.color ? Number(wrap.modelData.effect.color[1]) : 1
+                    property real cb: wrap.modelData.effect && wrap.modelData.effect.color ? Number(wrap.modelData.effect.color[2]) : 1
                     property real cx: wrap.modelData.effect ? Number(wrap.modelData.effect.cx) || 0.5 : 0.5
                     property real cy: wrap.modelData.effect ? Number(wrap.modelData.effect.cy) || 0.5 : 0.5
                     fragmentShader: wrap.modelData.effect

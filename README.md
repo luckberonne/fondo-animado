@@ -86,7 +86,8 @@ Formato propio: una carpeta con imágenes y un `project.json` con `"type": "scen
   La amplitud y la velocidad se editan en la configuración (`general.properties`: `parallax`, `velocidad`).
 - Shaders (`contents/shaders/*.frag`, compilar con `qsb --qt6 -o x.frag.qsb x.frag`): `agua` (ondas que crecen con la
   distancia al horizonte `horizon` + destellos), `brillo` (franja de luz que barre la capa), `viento` (balanceo),
-  `explosion` (mueve solo lo que una máscara `mask` marca como libre y hace titilar los brillos).
+  `explosion` (mueve solo lo que una máscara `mask` marca como libre y hace titilar los brillos), `ojos` (resplandor
+  que late, aditivo, sobre las zonas de una máscara).
   Uniformes comunes: `strength`, `speed`, `horizon`.
 - Partículas: `nieve`, `polvo`, `luciernagas`.
 - Todo avanza con un reloj limitado (cuadros/s, «Imágenes y escenas» en la configuración; 20 por defecto) y se pausa
@@ -101,6 +102,10 @@ contents/code/escena_desde_imagen.py ilustracion.jpg --titulo "Gengar explosione
 # afinar: --umbral 40 (más bajo = solo lo más oscuro queda quieto), --fuerza 0.006, --velocidad 0.4
 # forzar regiones concretas (coordenadas en 1920x1080; la salida lista cada región con su centro):
 #   --quieto 503,278   --mueve 1719,806
+# cuando las esquirlas son tan oscuras como el personaje y están pegadas a él, acotar el cuerpo con un polígono:
+#   --poligono "410,0 500,240 520,600 600,840 700,1000 1000,1080 1300,1000 1380,840 1400,600 1440,300 1500,0"
+# ojos (u otras luces) que laten con resplandor: una semilla por ojo; el color se toma de la imagen
+#   --brillo 739,490 --brillo 1181,480        (intensidad editable en la configuración: «Brillo de los ojos»)
 ```
 Detecta los personajes por luminancia, rellena lo que encierran (boca, ojos) solo si es cálido (los fluidos
 azules o violetas rodeados de sombra se siguen moviendo) y usa una máscara suave. Con el Gengar de ejemplo: 0 % de
@@ -121,7 +126,8 @@ configuración de fondos, pero independiente de la del escritorio. También se p
 El bloqueo lo dibuja otro proceso (`kscreenlocker_greet`) que no hereda el ajuste de GPU de plasmashell: un video
 ahí abre la NVIDIA en una laptop híbrida (medido: 28 descriptores en `/dev/nvidia*` y 22 % de CPU). Por eso, en el
 bloqueo, un video se muestra como su primer fotograma con el zoom lento de las imágenes (0 descriptores, 4 % de
-CPU), un fondo web como su miniatura si tiene, y una escena como su `poster`. Las imágenes animadas funcionan igual que en el escritorio.
+CPU), un fondo web como su miniatura si tiene, y una escena como su `poster`. Las imágenes animadas y las escenas (capas y shaders, sin video ni WebEngine) funcionan igual que en el escritorio:
+~2 % de CPU y sin abrir la NVIDIA.
 
 ## Video de prueba
 `examples/generar-prueba.sh` genera un degradado animado 1080p60 con ffmpeg.

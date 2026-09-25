@@ -41,10 +41,12 @@ WallpaperItem {
     // La pantalla de bloqueo la dibuja otro proceso (kscreenlocker_greet), que no hereda el ajuste de GPU de
     // plasmashell: un video ahí abre la NVIDIA y la despierta. Allí se muestra el primer fotograma con el
     // zoom lento de las imágenes; un fondo web, su miniatura (si tiene); y no se pausa por bloqueo ni ventanas.
+    // Las escenas sí se animan (no usan video ni WebEngine).
     readonly property bool isLockScreen: Qt.application.name === "kscreenlocker_greet"
 
     function forLockScreen(p) {
-        if (!p || p.type === "image")
+        // Imágenes y escenas (solo shaders y capas de imagen: no abren la NVIDIA) se ven animadas.
+        if (!p || p.type === "image" || p.type === "scene")
             return p;
         const firstImage = p.scene && p.scene.layers ? (p.scene.layers.find(l => l.image) || {}).image : "";
         const still = p.poster || p.preview || firstImage;
