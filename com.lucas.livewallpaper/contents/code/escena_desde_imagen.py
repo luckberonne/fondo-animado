@@ -42,7 +42,7 @@ quietos = opt_multi("--quieto"); mueves = opt_multi("--mueve")     # puntos (x,y
 abrir = opt("--abrir", 0, int)                                      # radio de apertura (px de 480x270)
 poligono = opt("--poligono", None)                                  # "x,y x,y ..." en 1920x1080: lo quieto se limita a esa zona
 brillos = opt_multi("--brillo")                                     # semillas de zonas que brillan (ojos)
-fuerza_brillo = opt("--fuerza-brillo", 1.8, float); tol_brillo = opt("--tolerancia-brillo", 90, int)
+fuerza_brillo = opt("--fuerza-brillo", 1.0, float); tol_brillo = opt("--tolerancia-brillo", 90, int)
 importar = "--importar" in args
 if importar: args.remove("--importar")
 if not args:
@@ -231,7 +231,12 @@ json.dump({
     "scene": {"layers": [
         {"image": "imagen.jpg", "depth": 0.0,
          "effect": {"shader": "explosion", "mask": "mascara.png", "strength": fuerza, "strengthProp": "fuerza", "speed": 1.0, "cx": 0.55, "cy": 0.5}}
-    ]}
+    ] + ([
+        # Neón de los ojos. speed = 1 / velocidad para que el parpadeo vaya en segundos reales.
+        {"image": "imagen.jpg", "depth": 0.0,
+         "effect": {"shader": "ojos", "mask": "ojos.png", "strength": fuerza_brillo, "strengthProp": "brillo",
+                    "speed": round(1 / velocidad, 3) if velocidad else 1.0, "color": glow_color}}
+    ] if glow_color else [])}
 }, open(os.path.join(out, "project.json"), "w"), ensure_ascii=False, indent=2)
 print(out)
 if importar:
