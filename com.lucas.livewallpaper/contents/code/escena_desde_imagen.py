@@ -42,7 +42,7 @@ quietos = opt_multi("--quieto"); mueves = opt_multi("--mueve")     # puntos (x,y
 abrir = opt("--abrir", 0, int)                                      # radio de apertura (px de 480x270)
 poligono = opt("--poligono", None)                                  # "x,y x,y ..." en 1920x1080: lo quieto se limita a esa zona
 brillos = opt_multi("--brillo")                                     # semillas de zonas que brillan (ojos)
-fuerza_brillo = opt("--fuerza-brillo", 0.9, float); tol_brillo = opt("--tolerancia-brillo", 90, int)
+fuerza_brillo = opt("--fuerza-brillo", 1.8, float); tol_brillo = opt("--tolerancia-brillo", 90, int)
 importar = "--importar" in args
 if importar: args.remove("--importar")
 if not args:
@@ -210,7 +210,7 @@ if brillos:
     # núcleo suave + halo ancho (más tenue) → una sola máscara con resplandor alrededor
     subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "rawvideo", "-pix_fmt", "gray", "-s", f"{W}x{H}", "-i", "-",
                     "-filter_complex", "[0]dilation,scale=1920:1080:flags=bicubic,split[c][h];[c]boxblur=5:2[cc];"
-                    "[h]boxblur=36:3,lutyuv=y=val*0.6[hh];[cc][hh]blend=all_mode=lighten", "-frames:v", "1",
+                    "[h]boxblur=58:3,lutyuv=y=val*0.9[hh];[cc][hh]blend=all_mode=lighten", "-frames:v", "1",
                     os.path.join(out, "ojos.png")], input=gray_glow, check=True)
 
 # ---------- imagen a 1920x1080, póster, miniatura y project.json ----------
@@ -225,7 +225,7 @@ json.dump({
         "parallax": {"order": 0, "text": "Movimiento de cámara", "type": "slider", "min": 0, "max": 100, "step": 5, "value": 0},
         "velocidad": {"order": 1, "text": "Velocidad", "type": "slider", "min": 0, "max": 3, "step": 0.1, "value": velocidad},
         "fuerza": {"order": 2, "text": "Intensidad", "type": "slider", "min": 0, "max": 0.03, "step": 0.001, "value": fuerza},
-        **({"brillo": {"order": 3, "text": "Brillo de los ojos", "type": "slider", "min": 0, "max": 2, "step": 0.05,
+        **({"brillo": {"order": 3, "text": "Brillo de los ojos", "type": "slider", "min": 0, "max": 3, "step": 0.05,
                        "value": fuerza_brillo}} if brillos else {})
     }},
     "scene": {"layers": [

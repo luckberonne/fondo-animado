@@ -22,8 +22,8 @@ void main() {
     // Latido lento con un parpadeo leve; nunca se apaga del todo.
     float pulse = 0.55 + 0.32 * sin(t * 1.3) + 0.10 * sin(t * 3.9 + 1.0) + 0.03 * sin(t * 11.0);
     vec3 col = vec3(cr, cg, cb);
-    vec3 add = col * m * pulse * strength * 0.75;
+    vec3 add = col * m * pulse * strength * 1.25;
     // Cuando el latido está alto, el centro se calienta hacia el blanco.
-    add += vec3(1.0, 0.82, 0.88) * pow(m, 2.5) * max(pulse - 0.72, 0.0) * strength * 1.1;
+    add += vec3(1.0, 0.82, 0.88) * pow(m, 2.0) * max(pulse - 0.6, 0.0) * strength * 1.4;
     fragColor = vec4(add, 0.0) * qt_Opacity;
 }
