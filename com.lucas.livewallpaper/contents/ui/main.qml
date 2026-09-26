@@ -132,6 +132,7 @@ WallpaperItem {
         anchors.fill: parent
         pauseOnMaximized: root.cfg.PauseOnMaximized && !root.isLockScreen
         pauseOnBattery: root.cfg.PauseOnBattery
+        pauseOnPowerSave: root.cfg.PauseOnPowerSave
         pauseOnLock: root.cfg.PauseOnLock && !root.isLockScreen
     }
 

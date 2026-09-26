@@ -10,13 +10,15 @@ Item {
     property bool pauseOnMaximized: true
     property bool pauseOnBattery: false
     property bool pauseOnLock: true
+    property bool pauseOnPowerSave: false
     property bool manualPause: false
 
     readonly property bool coveredByWindow: pauseOnMaximized && coveringCount > 0
     readonly property bool onBattery: pauseOnBattery && !power.pluggedIn
+    readonly property bool powerSaving: pauseOnPowerSave && profile.saving
     readonly property bool locked: pauseOnLock && lock.active
 
-    readonly property bool wantPlay: !manualPause && !coveredByWindow && !onBattery && !locked
+    readonly property bool wantPlay: !manualPause && !coveredByWindow && !onBattery && !powerSaving && !locked
     // Con histéresis: al pasar entre ventanas con Alt+Tab no se pausa/reanuda en falso.
     property bool shouldPlay: wantPlay
 
@@ -74,6 +76,16 @@ Item {
             const d = data["AC Adapter"];
             return !d || d["Plugged in"] !== false;
         }
+    }
+
+    // ---------- perfil de energía (power-profiles-daemon) ----------
+    P5Support.DataSource {
+        id: profile
+        engine: "executable"
+        property bool saving: false
+        interval: 5000
+        connectedSources: ctl.pauseOnPowerSave ? ["powerprofilesctl get"] : []
+        onNewData: (source, data) => saving = (data["stdout"] || "").trim() === "power-saver"
     }
 
     // ---------- pantalla bloqueada ----------

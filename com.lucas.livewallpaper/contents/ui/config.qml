@@ -28,6 +28,7 @@ Kirigami.FormLayout {
     property alias cfg_Volume: volume.value
     property alias cfg_PauseOnMaximized: pauseMax.checked
     property alias cfg_PauseOnBattery: pauseBattery.checked
+    property alias cfg_PauseOnPowerSave: pausePowerSave.checked
     property alias cfg_PauseOnLock: pauseLock.checked
     property string cfg_PropertyOverrides: "{}"
     property int cfg_ImageFps: 20
@@ -452,6 +453,10 @@ Kirigami.FormLayout {
     QQC2.CheckBox {
         id: pauseBattery
         text: "Al usar la batería"
+    }
+    QQC2.CheckBox {
+        id: pausePowerSave
+        text: "Con el perfil de ahorro de energía"
     }
     QQC2.CheckBox {
         id: pauseLock
