@@ -47,6 +47,11 @@ void main() {
     vec2 uv = qt_TexCoord0;
     float t = time * speed;
     float m = texture(mask, uv).r;
+    // Fuera de los ojos no se suma luz ni se oscurece nada: se evita calcular el neón en casi toda la pantalla.
+    if (m < 0.004) {
+        fragColor = vec4(0.0);
+        return;
+    }
     float pulse = neon(t);
     vec3 col = vec3(cr, cg, cb);
     vec3 add = col * m * pulse * strength * 0.85;

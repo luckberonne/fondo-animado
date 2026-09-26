@@ -26,6 +26,11 @@ void main() {
     vec2 uv = qt_TexCoord0;
     float t = time * speed;
     float move = 1.0 - texture(mask, uv).r;
+    // Donde la máscara deja todo quieto (los personajes) no hay nada que calcular: se copia la imagen tal cual.
+    if (move < 0.004) {
+        fragColor = texture(source, uv) * qt_Opacity;
+        return;
+    }
 
     // Flujo suave y lento (dos octavas de ruido), en una cuadrícula con la proporción de la imagen.
     vec2 p = uv * vec2(9.0, 5.0);

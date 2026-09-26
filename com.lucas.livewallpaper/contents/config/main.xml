@@ -17,7 +17,7 @@
     <entry name="PauseOnPowerSave" type="Bool"><default>false</default></entry>
     <entry name="PauseOnLock" type="Bool"><default>true</default></entry>
     <!-- Cuadros por segundo de las imágenes animadas (el zoom lento no necesita más) -->
-    <entry name="ImageFps" type="Int"><default>20</default></entry>
+    <entry name="ImageFps" type="Int"><default>15</default></entry>
     <!-- Tope de cuadros por segundo de los fondos web -->
     <entry name="WebFps" type="Int"><default>20</default></entry>
     <!-- Propiedades editadas por proyecto: JSON {"<carpeta>": {"zoom": 8, ...}} -->

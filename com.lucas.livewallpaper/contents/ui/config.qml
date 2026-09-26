@@ -31,7 +31,7 @@ Kirigami.FormLayout {
     property alias cfg_PauseOnPowerSave: pausePowerSave.checked
     property alias cfg_PauseOnLock: pauseLock.checked
     property string cfg_PropertyOverrides: "{}"
-    property int cfg_ImageFps: 20
+    property int cfg_ImageFps: 15
     property int cfg_WebFps: 20
     property alias cfg_PlaylistEnabled: playlistEnabled.checked
     property alias cfg_PlaylistMinutes: playlistMinutes.value
@@ -422,6 +422,7 @@ Kirigami.FormLayout {
         valueRole: "value"
         model: [
             { text: "10 cuadros/s (ahorro)", value: 10 },
+            { text: "15 cuadros/s", value: 15 },
             { text: "20 cuadros/s", value: 20 },
             { text: "30 cuadros/s (más fluido)", value: 30 }
         ]
